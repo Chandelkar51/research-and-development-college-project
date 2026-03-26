@@ -3,7 +3,7 @@ const bcrypt = require("bcryptjs");
 const studentDetailsSchema = new mongoose.Schema(
   {
     enrollmentNo: {
-      type: Number,
+      type: String,
       required: true,
     },
     firstName: {
@@ -12,7 +12,6 @@ const studentDetailsSchema = new mongoose.Schema(
     },
     middleName: {
       type: String,
-      required: true,
     },
     lastName: {
       type: String,
