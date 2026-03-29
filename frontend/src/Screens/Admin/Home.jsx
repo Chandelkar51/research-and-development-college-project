@@ -12,6 +12,7 @@ import { setUserData } from "../../redux/actions";
 import axiosWrapper from "../../utils/AxiosWrapper";
 import Profile from "./Profile";
 import Exam from "../Exam";
+import Research from "./Research";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const MENU_ITEMS = [
@@ -20,6 +21,7 @@ const MENU_ITEMS = [
   { id: "faculty", label: "Faculty", component: Faculty },
   { id: "branch", label: "Branch", component: Branch },
   { id: "notice", label: "Notice", component: Notice },
+  { id: "research", label: "Research", component: Research },
   { id: "exam", label: "Exam", component: Exam },
   { id: "subjects", label: "Subjects", component: Subjects },
   { id: "admin", label: "Admin", component: Admin },
@@ -69,7 +71,7 @@ const Home = () => {
     const pathMenuId = urlParams.get("page") || "home";
     const validMenu = MENU_ITEMS.find((item) => item.id === pathMenuId);
     setSelectedMenu(validMenu ? validMenu.id : "home");
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   const getMenuItemClass = (menuId) => {
     const isSelected = selectedMenu === menuId;

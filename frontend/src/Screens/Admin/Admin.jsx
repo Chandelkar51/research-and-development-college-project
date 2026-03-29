@@ -106,6 +106,7 @@ const Admin = () => {
           }
         );
       } else {
+        formData.append("password", "admin123");
         response = await axiosWrapper.post(`/admin/register`, formData, {
           headers,
         });

@@ -16,6 +16,7 @@ const auth = require("../../middlewares/auth.middleware");
 
 router.post("/register", upload.single("file"), registerFacultyController);
 router.post("/login", loginFacultyController);
+router.get("/public", getAllFacultyController);
 router.get("/my-details", auth, getMyFacultyDetailsController);
 
 router.get("/", auth, getAllFacultyController);

@@ -8,7 +8,7 @@ const {
 const auth = require("../middlewares/auth.middleware");
 const router = express.Router();
 
-router.get("/", auth, getNoticeController);
+router.get("/", getNoticeController);
 router.post("/", auth, addNoticeController);
 router.put("/:id", auth, updateNoticeController);
 router.delete("/:id", auth, deleteNoticeController);

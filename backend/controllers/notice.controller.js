@@ -3,7 +3,13 @@ const ApiResponse = require("../utils/ApiResponse");
 
 const getNoticeController = async (req, res) => {
   try {
-    const notices = await Notice.find();
+    const query = {};
+
+    if (req.query.type && ["student", "faculty", "both"].includes(req.query.type)) {
+      query.type = req.query.type;
+    }
+
+    const notices = await Notice.find(query).sort({ createdAt: -1 });
     if (!notices || notices.length === 0) {
       return ApiResponse.error("No Notices Found", 404).send(res);
     }

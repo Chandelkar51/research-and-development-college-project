@@ -53,9 +53,13 @@ const generateEmployeeId = () => {
 
 const registerAdminController = async (req, res, next) => {
   try {
-    const { email, phone } = req.body;
+    const { email, phone, password } = req.body;
 
-    const profile = req.file.filename;
+    const profile = req.file?.filename;
+
+    if (!profile) {
+      return ApiResponse.badRequest("Profile photo is required").send(res);
+    }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return ApiResponse.badRequest("Invalid email format").send(res);
@@ -63,6 +67,12 @@ const registerAdminController = async (req, res, next) => {
 
     if (!/^\d{10}$/.test(phone)) {
       return ApiResponse.badRequest("Phone number must be 10 digits").send(res);
+    }
+
+    if (!password || password.length < 8) {
+      return ApiResponse.badRequest(
+        "Password must be at least 8 characters long"
+      ).send(res);
     }
 
     const existingAdmin = await adminDetails.findOne({
@@ -81,7 +91,7 @@ const registerAdminController = async (req, res, next) => {
       ...req.body,
       employeeId,
       profile,
-      password: "admin123",
+      password,
     });
 
     const sanitizedUser = await adminDetails

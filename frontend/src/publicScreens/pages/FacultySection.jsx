@@ -1,102 +1,139 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Building, Mail, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import axiosWrapper from "../../utils/AxiosWrapper";
+import { baseApiURL } from "../../baseUrl";
+
+const staticFaculty = [
+  {
+    id: 1,
+    name: "Deepak B. Phatak",
+    designation: "Faculty Emeritus",
+    email: "dbp",
+    phone: "7747",
+    office: "KR314, Kanwal Rekhi Building",
+    research:
+      "Database Management Systems, Software Engineering, Distributed Systems",
+    img: "https://randomuser.me/api/portraits/men/1.jpg",
+  },
+  {
+    id: 2,
+    name: "Bharat G Adsul",
+    designation: "Assistant Professor",
+    email: "adsul",
+    phone: "7712",
+    office: "CC317, Computing Complex",
+    research:
+      "Formal methods in Concurrency, Logics and Games, Geometric Complexity",
+    img: "https://randomuser.me/api/portraits/men/2.jpg",
+  },
+  {
+    id: 3,
+    name: "Arpit Agarwal",
+    designation: "Assosiat Professor",
+    email: "aarpit",
+    phone: "7906",
+    office: "KR222, Kanwal Rekhi Building",
+    research: "Machine Learning, Human-AI Interaction, Responsible AI",
+    img: "https://randomuser.me/api/portraits/men/3.jpg",
+  },
+];
 
 const FacultySection = () => {
   const [search, setSearch] = useState("");
-  const navigate=useNavigate();
+  const [dynamicFaculty, setDynamicFaculty] = useState([]);
+  const navigate = useNavigate();
 
-  const faculty = [
-    {
-      id: 1,
-      name: "Deepak B. Phatak",
-      designation: "Faculty Emeritus",
-      email: "dbp",
-      phone: "7747",
-      office: "KR314, Kanwal Rekhi Building",
-      research:
-        "Database Management Systems, Software Engineering, Distributed Systems",
-      img: "https://randomuser.me/api/portraits/men/1.jpg"
-    },
-    {
-      id: 2,
-      name: "Bharat G Adsul",
-      designation: "Assistant Professor",
-      email: "adsul",
-      phone: "7712",
-      office: "CC317, Computing Complex",
-      research:
-        "Formal methods in Concurrency, Logics and Games, Geometric Complexity",
-      img: "https://randomuser.me/api/portraits/men/2.jpg"
-    },
-    {
-      id: 3,
-      name: "Arpit Agarwal",
-      designation: "Assosiat Professor",
-      email: "aarpit",
-      phone: "7906",
-      office: "KR222, Kanwal Rekhi Building",
-      research:
-        "Machine Learning, Human-AI Interaction, Responsible AI",
-      img: "https://randomuser.me/api/portraits/men/3.jpg"
-    }
-  ];
+  useEffect(() => {
+    const loadFaculty = async () => {
+      try {
+        const response = await axiosWrapper.get("/faculty/public");
+        if (response.data.success) {
+          setDynamicFaculty(response.data.data);
+        }
+      } catch (error) {
+        setDynamicFaculty([]);
+      }
+    };
 
-  const filteredFaculty = faculty.filter((f) =>
-    f.name.toLowerCase().includes(search.toLowerCase())
+    loadFaculty();
+  }, []);
+
+  const mediaBaseUrl = baseApiURL().replace(/\/api$/, "");
+
+  const faculty = useMemo(() => {
+    const mappedDynamicFaculty = dynamicFaculty.map((item) => ({
+      id: item._id,
+      name: `${item.firstName || ""} ${item.lastName || ""}`.trim(),
+      designation: item.designation || "Faculty Member",
+      email: item.email ? item.email.replace("@cse.nitjsr.ac.in", "") : "",
+      phone: item.phone || "",
+      office: [item.address, item.city, item.state].filter(Boolean).join(", "),
+      research: item.branchId?.name
+        ? `Branch: ${item.branchId.name}`
+        : "Faculty details added from admin panel.",
+      img: item.profile ? `${mediaBaseUrl}/media/${item.profile}` : "",
+    }));
+
+    return [...mappedDynamicFaculty, ...staticFaculty];
+  }, [dynamicFaculty, mediaBaseUrl]);
+
+  const filteredFaculty = faculty.filter((item) =>
+    item.name.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
-    <div className="px-6 md:px-16 py-8 bg-gray-50 min-h-screen">
-      <h1 className="text-3xl font-semibold text-center mb-2">
-        Faculty
-      </h1>
-      <p className="text-center text-gray-600 mb-6 text-sm">
+    <div className="min-h-screen bg-gray-50 px-6 py-8 md:px-16">
+      <h1 className="mb-2 text-center text-3xl font-semibold">Faculty</h1>
+      <p className="mb-6 text-center text-sm text-gray-600">
         To contact a faculty member append @cse.nitjsr.ac.in to username
       </p>
 
-      <div className="flex justify-center mb-6">
+      <div className="mb-6 flex justify-center">
         <input
           type="text"
           placeholder="Search"
-          className="w-full md:w-1/3 border rounded-full px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full rounded-full border px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500 md:w-1/3"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        {filteredFaculty.map((f) => (
+      <div className="grid gap-6 md:grid-cols-2">
+        {filteredFaculty.map((facultyItem) => (
           <div
-            key={f.id}
-            className="bg-white rounded-xl shadow-sm border p-5 flex gap-4 hover:shadow-md transition"
+            key={facultyItem.id}
+            className="flex gap-4 rounded-xl border bg-white p-5 shadow-sm transition hover:shadow-md"
           >
             <img
-              src={f.img}
-              alt={f.name}
-              className="w-20 h-20 rounded-full object-cover"
+              src={facultyItem.img || "https://via.placeholder.com/100"}
+              alt={facultyItem.name}
+              className="h-20 w-20 rounded-full object-cover"
             />
             <div>
-              <h2 className="text-xl font-semibold text-blue-700 hover:underline transition pb-1 cursor-pointer"
-                onClick={()=>navigate('/faculty-details')}
-                >
-                {f.name}
+              <h2
+                className="cursor-pointer pb-1 text-xl font-semibold text-blue-700 transition hover:underline"
+                onClick={() => navigate("/faculty-details")}
+              >
+                {facultyItem.name}
               </h2>
-              {f.designation && (
-                <p className="text-red-500 text-sm">
-                  ({f.designation})
-                </p>
+              {facultyItem.designation && (
+                <p className="text-sm text-red-500">({facultyItem.designation})</p>
               )}
 
-              <div className="text-sm text-gray-700 mt-2 space-y-1">
-                <p><Mail className="inline-block" size={15} /> {f.email}</p>
-                <p><Phone className="inline-block" size={15}/> {f.phone}</p>
-                <p><Building className="inline-block" size={15}/> {f.office}</p>
+              <div className="mt-2 space-y-1 text-sm text-gray-700">
+                <p>
+                  <Mail className="inline-block" size={15} /> {facultyItem.email}
+                </p>
+                <p>
+                  <Phone className="inline-block" size={15} /> {facultyItem.phone}
+                </p>
+                <p>
+                  <Building className="inline-block" size={15} /> {facultyItem.office}
+                </p>
               </div>
 
-              <p className="text-sm text-gray-600 mt-2">
-                {f.research}
-              </p>
+              <p className="mt-2 text-sm text-gray-600">{facultyItem.research}</p>
             </div>
           </div>
         ))}

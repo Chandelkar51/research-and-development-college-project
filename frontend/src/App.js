@@ -15,6 +15,7 @@ import AcademicSection from "./publicScreens/pages/AcademicSection";
 import FacultySection from "./publicScreens/pages/FacultySection";
 import FacultyDetail from "./publicScreens/pages/FacultyDetail";
 import ResearchPage from "./publicScreens/pages/ResearchPage";
+import NewsPage from "./publicScreens/pages/NewsPage";
 
 const App = () => {
   return (
@@ -27,6 +28,7 @@ const App = () => {
               <Route index element={<DepartmentPage />} />
               <Route path="faculty" element={<FacultySection />} />
               <Route path="research" element={<ResearchPage />} />
+              <Route path="news" element={<NewsPage />} />
               <Route path="academic" element={<AcademicSection />} />
             </Route>
             <Route path="faculty-details" element={<FacultyDetail />} />
@@ -43,7 +45,7 @@ const App = () => {
             <Route path="/student" element={<StudentHome />} />
             <Route path="/faculty" element={<FacultyHome />} />
             <Route path="/admin" element={<AdminHome />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>
       </Provider>

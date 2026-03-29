@@ -32,7 +32,10 @@ const loginFacultyController = async (req, res) => {
 
 const getAllFacultyController = async (req, res) => {
   try {
-    const users = await facultyDetails.find().select("-__v -password");
+    const users = await facultyDetails
+      .find()
+      .populate("branchId", "name branchId")
+      .select("-__v -password");
     if (!users || users.length === 0) {
       return ApiResponse.notFound("No Faculty Found").send(res);
     }
@@ -49,8 +52,12 @@ const generateEmployeeId = () => {
 
 const registerFacultyController = async (req, res) => {
   try {
-    const { email, phone } = req.body;
-    const profile = req.file.filename;
+    const { email, phone, password } = req.body;
+    const profile = req.file?.filename;
+
+    if (!profile) {
+      return ApiResponse.badRequest("Profile photo is required").send(res);
+    }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return ApiResponse.badRequest("Invalid email format").send(res);
@@ -58,6 +65,12 @@ const registerFacultyController = async (req, res) => {
 
     if (!/^\d{10}$/.test(phone)) {
       return ApiResponse.badRequest("Phone number must be 10 digits").send(res);
+    }
+
+    if (!password || password.length < 8) {
+      return ApiResponse.badRequest(
+        "Password must be at least 8 characters"
+      ).send(res);
     }
 
     const existing = await facultyDetails.findOne({
@@ -75,7 +88,7 @@ const registerFacultyController = async (req, res) => {
       ...req.body,
       employeeId,
       profile,
-      password: "faculty123",
+      password,
     });
 
     const sanitizedUser = await facultyDetails

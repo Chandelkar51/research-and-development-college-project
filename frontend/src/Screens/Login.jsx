@@ -58,14 +58,17 @@ const LoginForm = ({ selected, onSubmit, formData, setFormData }) => (
       </Link>
     </div>
     <div className="mb-6 text-sm text-gray-600">
-      Need a student account?{" "}
-      <Link className="font-medium text-blue-600 hover:underline" to="/signup">
+      Need a {selected.toLowerCase()} account?{" "}
+      <Link
+        className="font-medium text-blue-600 hover:underline"
+        to={`/signup?type=${selected.toLowerCase()}`}
+      >
         Sign up
       </Link>
     </div>
     <CustomButton
       type="submit"
-      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-lg transition duration-200 flex justify-center items-center gap-2"
+      className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#3367e8] px-4 py-3.5 text-lg font-semibold text-white shadow-[0_6px_18px_rgba(51,103,232,0.28)] transition duration-200 hover:bg-[#2c5ddb]"
     >
       Login
       <FiLogIn className="text-lg" />
@@ -78,11 +81,12 @@ const UserTypeSelector = ({ selected, onSelect }) => (
     {Object.values(USER_TYPES).map((type) => (
       <button
         key={type}
+        type="button"
         onClick={() => onSelect(type)}
-        className={`px-5 py-2 text-sm font-medium rounded-full transition duration-200 ${
+        className={`min-w-[102px] rounded-full px-7 py-3 text-xl font-medium shadow-sm transition duration-200 ${
           selected === type
-            ? "bg-blue-600 text-white shadow"
-            : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+            ? "bg-[#3367e8] text-white shadow-[0_6px_18px_rgba(51,103,232,0.28)]"
+            : "bg-[#f3f5fb] text-[#111827] hover:bg-[#e9eefc]"
         }`}
       >
         {type}
@@ -107,6 +111,10 @@ const Login = () => {
   const handleUserTypeSelect = (type) => {
     const userType = type.toLowerCase();
     setSelected(type);
+    setFormData({
+      email: "",
+      password: "",
+    });
     setSearchParams({ type: userType });
   };
 
@@ -150,7 +158,9 @@ const Login = () => {
   useEffect(() => {
     if (type) {
       const capitalizedType = type.charAt(0).toUpperCase() + type.slice(1);
-      setSelected(capitalizedType);
+      if (Object.values(USER_TYPES).includes(capitalizedType)) {
+        setSelected(capitalizedType);
+      }
     }
   }, [type]);
 

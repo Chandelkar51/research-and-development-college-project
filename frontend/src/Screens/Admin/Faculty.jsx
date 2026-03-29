@@ -136,6 +136,7 @@ const Faculty = () => {
           }
         );
       } else {
+        formData.append("password", "faculty123");
         response = await axiosWrapper.post(`/faculty/register`, formData, {
           headers,
         });
