@@ -13,7 +13,7 @@ router.post("/", createPublication);
 
 router.get("/", getAllPublications);
 
-router.get("/:id", getPublicationById);
+router.get("/:type/:id", getPublicationById);
 
 router.put("/:id", updatePublication);
 

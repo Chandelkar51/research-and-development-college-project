@@ -1,22 +1,21 @@
 const mongoose = require("mongoose");
 const Publication = require("../models/publication.model");
+const ApiResponse = require("../utils/ApiResponse");
 
 exports.createPublication = async (req, res) => {
   try {
     const { title, type, scholar, name} = req.body;
 
     if (!title || !type || !scholar || !name) {
-      return res.status(400).json({
-        message: "Title, type, scholar and name are required"
-      });
+      return ApiResponse.success("Title, type, scholar and name are required").send(res);
     }
 
     const publication = new Publication(req.body);
     const saved = await publication.save();
 
-    res.status(201).json(saved);
+    return ApiResponse.success(saved, "Data Saved!").send(res);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return ApiResponse.success(error.message).send(res);
   }
 };
 
@@ -26,30 +25,30 @@ exports.getAllPublications = async (req, res) => {
     const publications = await Publication.find()
       .populate("scholar", "firstName lastName rollNo");
 
-    res.status(200).json(publications);
+    return ApiResponse.success(publications, "Data fetched").send(res);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return ApiResponse.success(error.message).send(res);
   }
 };
 
 exports.getPublicationById = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { type, id } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid ID" });
+    if (!mongoose.Types.ObjectId.isValid(id) || !type) {
+      return ApiResponse.success("Wrong Request").send(res);
     }
 
-    const publication = await Publication.findById(id)
+    const publication = await Publication.find({scholar : id, type})
       .populate("scholar", "firstName lastName rollNo");
 
     if (!publication) {
-      return res.status(404).json({ message: "Publication not found" });
+      return ApiResponse.success("No Records").send(res);
     }
 
-    res.status(200).json(publication);
+    return ApiResponse.success(publication, "Data Fetched").send(res);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return ApiResponse.success(error.message).send(res);
   }
 };
 
@@ -58,23 +57,22 @@ exports.updatePublication = async (req, res) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid ID" });
+      return ApiResponse.success("Wrong Request").send(res);
     }
 
-    const updated = await Publication.findByIdAndUpdate(
-      id,
+    const updated = await Publication.findByIdAndUpdate(id,
       req.body,
       { new: true, runValidators: true }
     )
       .populate("scholar", "firstName lastName rollNo");
 
     if (!updated) {
-      return res.status(404).json({ message: "Publication not found" });
+      return ApiResponse.success("Publication not found!").send(res);
     }
 
-    res.status(200).json(updated);
+    return ApiResponse.success(updated, `${type} updated.`).send(res);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return ApiResponse.success(error.message).send(res);
   }
 };
 
@@ -84,17 +82,17 @@ exports.deletePublication = async (req, res) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid ID" });
+      return ApiResponse.success("Wrong Request").send(res);
     }
 
     const deleted = await Publication.findByIdAndDelete(id);
 
     if (!deleted) {
-      return res.status(404).json({ message: "Publication not found" });
+      return ApiResponse.success("Publication not found!").send(res);
     }
 
-    res.status(200).json({ message: "Publication deleted successfully" });
+    return ApiResponse.success(`${type} deleted successfully.`).send(res);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return ApiResponse.success(error.message).send(res);
   }
 };

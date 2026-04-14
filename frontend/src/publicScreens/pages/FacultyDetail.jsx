@@ -3,29 +3,14 @@ import { useNavigate, useParams } from "react-router-dom";
 import axiosWrapper from "../../utils/AxiosWrapper";
 
 const FacultyDetail = () => {
-  const facultyStatic = {
-    firstName: "Dr. Deepak B. Phatak",
-    designation: "Professor",
-    department: "Department of CSE, NIT Jamshedpur",
-    email: "dbp@nitjsr.ac.in",
-    phone: "+91-22-25767747",
-    office: "Kanwal Rekhi Building",
-    website: "www.cse.nitjsr.ac.in/~dbp",
-    img: "https://randomuser.me/api/portraits/men/10.jpg",
-    bio: `Born on 2nd April 1948, Professor Phatak obtained his Bachelor's degree in Electrical Engineering...
-    
-He has guided several PhD and MTech students and authored multiple research papers. His work focuses on software engineering, distributed systems, and IT-enabled education.
-
-He has contributed to national-level projects and innovation initiatives in India.`
-  };
   const navigate=useNavigate();
   const [faculty, setFaculty]=useState(null);
-  const {id, type}=useParams()
+  const {id}=useParams()
 
   useEffect(() => {
     const loadBio = async () => {
       try {
-        const response = await axiosWrapper.get(type ? `/research/${id}` : `/faculty/my-bio/${id}`);
+        const response = await axiosWrapper.get(`/faculty/my-bio/${id}`);
         console.log(response.data)
         if (response.data.success) {
           setFaculty(response.data.data);
@@ -73,15 +58,6 @@ console.log(faculty)
               <p>📞 {faculty?.phone}</p>
               <p>📧 {faculty?.email}</p>
               <p>🏢 {faculty?.office}</p>
-              <p>
-                🌐{" "}
-                <a
-                  href={`https://${faculty?.website}`}
-                  className="underline"
-                >
-                  {faculty?.website}
-                </a>
-              </p>
             </div>
           </div>
         </div>

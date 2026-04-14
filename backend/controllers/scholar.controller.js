@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Scholar = require("../models/scholar.model");
-
 const bcrypt = require("bcryptjs");
+const ApiResponse = require("../utils/ApiResponse")
 
 
 exports.createScholar = async (req, res) => {
@@ -17,16 +17,12 @@ exports.createScholar = async (req, res) => {
     } = req.body;
 
     if (!firstName || !lastName || !rollNo || !email || !enrollmentDate || !phone || !password) {
-      return res.status(400).json({
-        message: "Required fields missing"
-      });
+      return ApiResponse.created("Required fields missing").send(res);
     }
 
     const existing = await Scholar.findOne({ rollNo });
     if (existing) {
-      return res.status(400).json({
-        message: "Scholar with this roll number already exists"
-      });
+      return ApiResponse.created("Scholar with this roll number already exists").send(res);
     }
 
     const saltRounds = 10;
@@ -42,24 +38,115 @@ exports.createScholar = async (req, res) => {
     const result = saved.toObject();
     delete result.password;
 
-    res.status(201).json(result);
+    return ApiResponse.created(result, "Record Added.").send(res);
 
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return ApiResponse.created(error.message).send(res);
   }
 };
 
+exports.bulkUploadController = async (req, res) => {
+  try {
+    if (!req.file) {
+      return ApiResponse.badRequest("CSV file is required").send(res);
+    }
+
+    const rows = await parseCsvFile(req.file.path);
+    await fs.unlink(req.file.path).catch(() => {});
+
+    if (rows.length === 0) {
+      return ApiResponse.badRequest(
+        "CSV file must contain at least one researcher row"
+      ).send(res);
+    }
+
+    const inserted = [];
+    const errors = [];
+    const seenRolls = new Set();
+
+    for (const row of rows) {
+      try {
+        const payload = normalizePayload({
+          type: "Regular",
+          firstName: row.firstName,
+          lastName: row.lastName,
+          rollNo: row.rollNo,
+          enrollmentDate: row.enrollmentDate,
+          department: row.department || "Computer Science and Engineering",
+          email: row.email,
+          phone: row.phone,
+          profile: row.profile,
+          supervisor: row.supervisor,
+          coSupervisor: row.coSupervisor,
+        });
+
+        const validationError = validateScholarPayload(payload);
+        if (validationError) {
+          throw new Error(validationError);
+        }
+
+        const normalizedRoll = String(payload.roll || "").trim().toLowerCase();
+        if (seenRolls.has(normalizedRoll)) {
+          throw new Error("Duplicate roll number in uploaded file");
+        }
+
+        const existingResearcher = await Scholar.findOne({
+          type: "Regular",
+          rollNo: payload.rollNo,
+        });
+
+        if (existingResearcher) {
+          throw new Error("Researcher with this roll number already exists");
+        }
+
+        const createdResearcher = await Scholar.create(payload);
+        inserted.push({
+          _id: createdResearcher._id,
+          firstName: createdResearcher.firstName,
+          lastName: createdResearcher.lastName,
+          rollNo: createdResearcher.rollNo,
+        });
+        seenRolls.add(normalizedRoll);
+      } catch (rowError) {
+        errors.push({
+          row: row.__rowNumber,
+          message: rowError.message || "Invalid row",
+        });
+      }
+    }
+
+    return ApiResponse.success(
+      {
+        insertedCount: inserted.length,
+        failedCount: errors.length,
+        inserted,
+        errors,
+      },
+      inserted.length > 0
+        ? "Research bulk upload processed"
+        : "No researchers were uploaded"
+    ).send(res);
+  } catch (error) {
+    if (req.file?.path) {
+      await fs.unlink(req.file.path).catch(() => {});
+    }
+    return ApiResponse.internalServerError(
+      error.message || "Research bulk upload failed"
+    ).send(res);
+  }
+};
 
 exports.getAllScholars = async (req, res) => {
   try {
     const scholars = await Scholar.find()
       .populate("supervisor", "name")
-      .populate("coSupervisor", "name")
-      .populate("srcCommittee.member", "name");
+      .populate("coSupervisor", "name");
+    if(!scholars)
+      return ApiResponse.created([], "No Record!").send(res);
 
-    res.status(200).json(scholars);
+    return ApiResponse.created(scholars, "Data fetched Successfully!").send(res);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return ApiResponse.error(error.message).send(res);
   }
 };
 
@@ -69,21 +156,21 @@ exports.getScholarById = async (req, res) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid ID" });
+      return ApiResponse.created("Wrong request!").send(res);
     }
 
     const scholar = await Scholar.findById(id)
-      .populate("supervisor", "name")
-      .populate("coSupervisor", "name")
-      .populate("srcCommittee.member", "name");
+      .populate("supervisor", "firstName lastName")
+      .populate("coSupervisor", "firstName lastName")
+      .populate("srcCommittee.member", "firstName lastName");
 
     if (!scholar) {
-      return res.status(404).json({ message: "Scholar not found" });
+      return ApiResponse.created("No Record!").send(res);
     }
 
-    res.status(200).json(scholar);
+    return ApiResponse.created(scholar, "Data fetched!").send(res);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return ApiResponse.created(error.message).send(res);
   }
 };
 
@@ -93,7 +180,7 @@ exports.updateScholar = async (req, res) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid ID" });
+      return ApiResponse.created("Wrong request!").send(res);
     }
 
     const updated = await Scholar.findByIdAndUpdate(
@@ -106,12 +193,12 @@ exports.updateScholar = async (req, res) => {
       .populate("srcCommittee.member", "name");
 
     if (!updated) {
-      return res.status(404).json({ message: "Scholar not found" });
+      return ApiResponse.created("Scholar not found").send(res);
     }
 
-    res.status(200).json(updated);
+    return ApiResponse.created(updated, "Record updated!").send(res);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return ApiResponse.created(error.message).send(res);
   }
 };
 
@@ -121,17 +208,17 @@ exports.deleteScholar = async (req, res) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid ID" });
+      return ApiResponse.created("Wrong request!").send(res);
     }
 
     const deleted = await Scholar.findByIdAndDelete(id);
 
     if (!deleted) {
-      return res.status(404).json({ message: "Scholar not found" });
+      return ApiResponse.created("Record not found").send(res);
     }
 
-    res.status(200).json({ message: "Scholar deleted successfully" });
+    return ApiResponse.created("Record deleted successfully").send(res);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return ApiResponse.created(error.message).send(res);
   }
 };

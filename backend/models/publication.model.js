@@ -9,7 +9,7 @@ const publicationSchema = new mongoose.Schema({
 
   type: {
     type: String,
-    enum: ["journal", "conference", "book-chapter", "patent"],
+    enum: ["Journal", "Conference", "Book-Chapter", "Patent"],
     required: true
   },
 
@@ -31,16 +31,25 @@ const publicationSchema = new mongoose.Schema({
   },
 
   impactFactor: {
-  type: Number,
-  min: 0,
-  default: 0
-},
+    type: Number,
+    min: 0,
+    default: 0
+  },
 
   scopusIndex: {
-  type: String,
-  enum: ["yes", "no", "NA"],
-  default: "NA"
-},
+    type: String,
+    enum: ["yes", "no", "NA"],
+    default: "NA"
+  },
+
+  conferenceDate:{
+    type: Date,
+    default: null
+  },
+
+  conferenceVenue:{
+    type: String,
+  },
 
   applicationNo: {
     type: Number
@@ -73,7 +82,7 @@ const publicationSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ["published", "accepted", "submitted", "communicated", "under review", "filed", "fer", "grant"],
-    default: "submitted"
+    default: "communicated"
   },
 
   communicationDate: {
@@ -86,7 +95,7 @@ const publicationSchema = new mongoose.Schema({
     default: "NA"
   },
 
-  volume: {
+  volumeNo: {
     type: Number
   },
 

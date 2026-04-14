@@ -6,31 +6,22 @@ import { MdDeleteOutline, MdEditNote } from "react-icons/md";
 import { BookOpenText } from "lucide-react";
 import Heading from "../../components/Heading";
 import CustomButton from "../../components/CustomButton";
-import DeleteConfirm from "../../components/DeleteConfirm";
 import Loading from "../../components/Loading";
 import BulkUploadModal from "../../components/BulkUploadModal";
 import axiosWrapper from "../../utils/AxiosWrapper";
-import {
-  createEmptyPublication,
-  publicationCategories,
-  publicationFieldConfig,
-} from "../../utils/researchPublicationConfig";
 
 const initialScholarForm = {
-  type: "scholar",
-  name: "",
-  roll: "",
+  type: "Regular",
+  firstName: "",
+  lastName: "",
+  rollNo: "",
+  enrollmentDate: "",
   department: "Computer Science and Engineering",
   email: "",
   phone: "",
-  website: "",
-  profileImage: "",
-  thesis: "",
-  year: "",
-  guide: "",
-  programType: "regular",
-  semesterRegistration: "",
-  publications: [],
+  profile: "",
+  supervisor: "",
+  coSupervisor: "",
 };
 
 const Research = () => {
@@ -42,16 +33,15 @@ const Research = () => {
   const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [selectedResearchId, setSelectedResearchId] = useState(null);
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [scholarForm, setScholarForm] = useState(initialScholarForm);
   const [programTab, setProgramTab] = useState("regular");
-  const [publicationTab, setPublicationTab] = useState("journal");
 
   const getResearchItems = async () => {
     try {
       setDataLoading(true);
-      const response = await axiosWrapper.get("/research");
+      const response = await axiosWrapper.get("/scholar");
       if (response.data.success) {
+        console.log(response.data.data)
         setResearchItems(response.data.data);
       } else {
         toast.error(response.data.message);
@@ -61,7 +51,7 @@ const Research = () => {
         setResearchItems([]);
       } else {
         toast.error(
-          error.response?.data?.message || "Failed to load research data"
+          error.response?.data?.message || "Failed to load researcher data"
         );
       }
     } finally {
@@ -76,48 +66,37 @@ const Research = () => {
   const researchScholars = useMemo(
     () =>
       researchItems.filter(
-        (item) => item.type === "scholar" && (item.programType || "regular") === programTab
+        (item) => item.type === "Regular" && (item.programType || "regular") === programTab
       ),
     [programTab, researchItems]
-  );
-
-  const modalPublications = scholarForm.publications.filter(
-    (publication) => publication.category === publicationTab
   );
 
   const resetModal = () => {
     setShowModal(false);
     setEditingItem(null);
     setScholarForm(initialScholarForm);
-    setPublicationTab("journal");
   };
 
   const openAddModal = () => {
     setEditingItem(null);
     setScholarForm(initialScholarForm);
-    setPublicationTab("journal");
     setShowModal(true);
   };
 
   const handleEdit = (item) => {
     setEditingItem(item);
     setScholarForm({
-      type: "scholar",
-      name: item.name || "",
-      roll: item.roll || "",
+      type: "Regular",
+      firstName: item.firstName || "",
+      lastName: item.lastName || "",
+      rollNo: item.rollNo || "",
       department: item.department || "Computer Science and Engineering",
       email: item.email || "",
       phone: item.phone || "",
-      website: item.website || "",
-      profileImage: item.profileImage || "",
-      thesis: item.thesis || "",
-      year: item.year || "",
-      guide: item.guide || "",
-      programType: item.programType || "regular",
-      semesterRegistration: item.semesterRegistration || "",
-      publications: Array.isArray(item.publications) ? item.publications : [],
+      profile: item.profile || "",
+      supervisor: item.supervisor || "",
+      coSupervisor: item.coSupervisor || "",
     });
-    setPublicationTab(item.publications?.[0]?.category || "journal");
     setShowModal(true);
   };
 
@@ -126,7 +105,7 @@ const Research = () => {
     try {
       toast.loading(editingItem ? "Updating researcher" : "Adding researcher");
       const response = await axiosWrapper[editingItem ? "put" : "post"](
-        `/research${editingItem ? `/${editingItem._id}` : ""}`,
+        `/scholar${editingItem ? `/${editingItem._id}` : ""}`,
         scholarForm,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -144,51 +123,8 @@ const Research = () => {
     }
   };
 
-  const handleDelete = async () => {
-    try {
-      toast.loading("Deleting researcher");
-      const response = await axiosWrapper.delete(`/research/${selectedResearchId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      toast.dismiss();
-      if (response.data.success) {
-        toast.success(response.data.message);
-        setIsDeleteConfirmOpen(false);
-        getResearchItems();
-      } else {
-        toast.error(response.data.message);
-      }
-    } catch (error) {
-      toast.dismiss();
-      toast.error(error.response?.data?.message || "Failed to delete researcher");
-    }
-  };
-
   const handleScholarChange = (field, value) => {
     setScholarForm((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const addPublicationRow = (category) => {
-    setScholarForm((prev) => ({
-      ...prev,
-      publications: [...prev.publications, createEmptyPublication(category)],
-    }));
-  };
-
-  const updatePublicationRow = (index, field, value) => {
-    setScholarForm((prev) => ({
-      ...prev,
-      publications: prev.publications.map((publication, publicationIndex) =>
-        publicationIndex === index ? { ...publication, [field]: value } : publication
-      ),
-    }));
-  };
-
-  const removePublicationRow = (index) => {
-    setScholarForm((prev) => ({
-      ...prev,
-      publications: prev.publications.filter((_, publicationIndex) => publicationIndex !== index),
-    }));
   };
 
   const handleBulkUpload = async (csvFile) => {
@@ -197,7 +133,7 @@ const Research = () => {
       const payload = new FormData();
       payload.append("file", csvFile);
 
-      const response = await axiosWrapper.post(`/research/bulk-upload`, payload, {
+      const response = await axiosWrapper.post(`/scholar/bulk-upload`, payload, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
@@ -304,10 +240,10 @@ const Research = () => {
                     <div className="flex gap-4">
                       <img
                         src={
-                          researcher.profileImage ||
-                          `https://api.dicebear.com/7.x/adventurer/svg?seed=${researcher.name}`
+                          researcher.profile ||
+                          `https://api.dicebear.com/7.x/adventurer/svg?seed=${researcher.firstName}`
                         }
-                        alt={researcher.name}
+                        alt={researcher.firstName}
                         className="h-20 w-20 rounded-full object-cover bg-gray-100"
                       />
                       <div className="flex-1">
@@ -319,11 +255,11 @@ const Research = () => {
                                 navigate(`/admin?page=research-detail&id=${researcher._id}`)
                               }
                             >
-                              {researcher.name}
+                              {researcher.firstName +" "+ researcher.lastName}
                             </h2>
-                            {researcher.roll && (
+                            {researcher.rollNo && (
                               <p className="text-sm text-red-500">
-                                ({researcher.roll})
+                                ({researcher.rollNo})
                               </p>
                             )}
 
@@ -332,7 +268,7 @@ const Research = () => {
                                 <BookOpenText className="inline-block mr-1" size={15} />
                                 {researcher.thesis}
                               </p>
-                              <p>Guide: {researcher.guide}</p>
+                              <p>Guide: {researcher.supervisor}</p>
                             </div>
                           </div>
 
@@ -343,16 +279,6 @@ const Research = () => {
                               onClick={() => handleEdit(researcher)}
                             >
                               <MdEditNote />
-                            </CustomButton>
-                            <CustomButton
-                              variant="danger"
-                              className="!p-2"
-                              onClick={() => {
-                                setSelectedResearchId(researcher._id);
-                                setIsDeleteConfirmOpen(true);
-                              }}
-                            >
-                              <MdDeleteOutline />
                             </CustomButton>
                           </div>
                         </div>
@@ -380,85 +306,20 @@ const Research = () => {
 
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input type="text" placeholder="Researcher name" value={scholarForm.name} onChange={(e) => handleScholarChange("name", e.target.value)} className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                <input type="text" placeholder="Roll number" value={scholarForm.roll} onChange={(e) => handleScholarChange("roll", e.target.value)} className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input type="text" placeholder="Researcher First Name" value={scholarForm.firstName} onChange={(e) => handleScholarChange("name", e.target.value)} className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input type="text" placeholder="Researcher Last Name" value={scholarForm.lastName} onChange={(e) => handleScholarChange("name", e.target.value)} className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input type="text" placeholder="Roll number" value={scholarForm.rollNo} onChange={(e) => handleScholarChange("roll", e.target.value)} className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 <input type="text" placeholder="Department" value={scholarForm.department} onChange={(e) => handleScholarChange("department", e.target.value)} className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                <select value={scholarForm.programType} onChange={(e) => handleScholarChange("programType", e.target.value)} className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="regular">Regular</option>
-                  <option value="partTime">Part-Time</option>
+                <select value={scholarForm.type} onChange={(e) => handleScholarChange("type", e.target.value)} className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="Regular">Regular</option>
+                  <option value="Part-Time">Part-Time</option>
                 </select>
+                <input type="text" placeholder="Enrollment Date" value={scholarForm.year} onChange={(e) => handleScholarChange("year", e.target.value)} className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 <input type="email" placeholder="Email" value={scholarForm.email} onChange={(e) => handleScholarChange("email", e.target.value)} className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 <input type="text" placeholder="Phone" value={scholarForm.phone} onChange={(e) => handleScholarChange("phone", e.target.value)} className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                <input type="text" placeholder="Guide" value={scholarForm.guide} onChange={(e) => handleScholarChange("guide", e.target.value)} className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                <input type="text" placeholder="Passing/Publish year" value={scholarForm.year} onChange={(e) => handleScholarChange("year", e.target.value)} className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                <input type="text" placeholder="Website" value={scholarForm.website} onChange={(e) => handleScholarChange("website", e.target.value)} className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                <input type="text" placeholder="Profile image URL" value={scholarForm.profileImage} onChange={(e) => handleScholarChange("profileImage", e.target.value)} className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              </div>
-
-              <textarea rows="3" placeholder="Thesis / research title" value={scholarForm.thesis} onChange={(e) => handleScholarChange("thesis", e.target.value)} className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              <textarea rows="3" placeholder="Semester registration details" value={scholarForm.semesterRegistration} onChange={(e) => handleScholarChange("semesterRegistration", e.target.value)} className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-
-              <div className="rounded-xl border border-gray-200 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div className="flex flex-wrap gap-3">
-                    {publicationCategories.map((category) => (
-                      <button
-                        key={category.key}
-                        type="button"
-                        onClick={() => setPublicationTab(category.key)}
-                        className={`rounded-xl px-4 py-2 text-sm font-medium ${
-                          publicationTab === category.key
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        {category.label}
-                      </button>
-                    ))}
-                  </div>
-                  <CustomButton type="button" onClick={() => addPublicationRow(publicationTab)}>
-                    Add {publicationCategories.find((item) => item.key === publicationTab)?.label}
-                  </CustomButton>
-                </div>
-
-                <div className="mt-4 space-y-4">
-                  {modalPublications.length === 0 ? (
-                    <div className="rounded-lg bg-gray-50 px-4 py-6 text-sm text-gray-500">
-                      No {publicationCategories.find((item) => item.key === publicationTab)?.label.toLowerCase()} entries added yet.
-                    </div>
-                  ) : (
-                    scholarForm.publications.map((publication, publicationIndex) =>
-                      publication.category === publicationTab ? (
-                        <div key={`${publication.category}-${publicationIndex}`} className="rounded-xl border border-gray-200 p-4">
-                          <div className="mb-4 flex justify-between items-center">
-                            <h3 className="font-semibold text-gray-800">
-                              {publicationCategories.find((item) => item.key === publication.category)?.label} Entry
-                            </h3>
-                            <CustomButton type="button" variant="danger" className="!p-2" onClick={() => removePublicationRow(publicationIndex)}>
-                              <MdDeleteOutline />
-                            </CustomButton>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {[
-                              ...publicationFieldConfig[publication.category]
-                                .columns,
-                            ].map(([field, label]) => (
-                              <input
-                                key={field}
-                                type="text"
-                                placeholder={label}
-                                value={publication[field]}
-                                onChange={(e) => updatePublicationRow(publicationIndex, field, e.target.value)}
-                                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      ) : null
-                    )
-                  )}
-                </div>
+                <input type="text" placeholder="Supervisor" value={scholarForm.supervisor} onChange={(e) => handleScholarChange("guide", e.target.value)} className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input type="text" placeholder="Co-Supervisor" value={scholarForm.coSupervisor} onChange={(e) => handleScholarChange("guide", e.target.value)} className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input type="file" placeholder="Profile image" value={scholarForm.profileImage} onChange={(e) => handleScholarChange("profileImage", e.target.value)} className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
 
               <div className="flex justify-end gap-4 pt-4 border-t">
@@ -474,12 +335,6 @@ const Research = () => {
         </div>
       )}
 
-      <DeleteConfirm
-        isOpen={isDeleteConfirmOpen}
-        onClose={() => setIsDeleteConfirmOpen(false)}
-        onConfirm={handleDelete}
-        message="Are you sure you want to delete this researcher?"
-      />
       <BulkUploadModal
         isOpen={showBulkUploadModal}
         onClose={() => setShowBulkUploadModal(false)}
