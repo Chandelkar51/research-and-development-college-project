@@ -6,22 +6,19 @@ const {
   getAllScholars,
   getScholarById,
   updateScholar,
-  deleteScholar
+  deleteScholar,
+  bulkUploadController
 } = require("../controllers/scholar.controller");
 
-// ✅ Create Scholar
 router.post("/", createScholar);
+router.post("/bulk-upload", bulkUploadController);
 
-// ✅ Get All Scholars
 router.get("/", getAllScholars);
 
-// ✅ Get Single Scholar
 router.get("/:id", getScholarById);
 
-// ✅ Update Scholar
 router.put("/:id", updateScholar);
 
-// ✅ Delete Scholar
 router.delete("/:id", deleteScholar);
 
 module.exports = router;

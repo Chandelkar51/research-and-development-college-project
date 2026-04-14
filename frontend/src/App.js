@@ -18,6 +18,9 @@ import ResearchPage from "./publicScreens/pages/ResearchPage";
 import NewsPage from "./publicScreens/pages/NewsPage";
 import EventPage from "./publicScreens/pages/EventPage";
 import ResearcherDetails from "./publicScreens/pages/ResearcherDetails";
+// import ScholarsInfo from "./publicScreens/components/ScholarsInfo";
+// import ScholarsPublications from "./publicScreens/components/ScholarsPublications";
+// import ScholarsSemesters from "./publicScreens/components/ScholarsSemesters";
 
 const App = () => {
   return (
@@ -36,7 +39,11 @@ const App = () => {
 
             </Route>
             <Route path="faculty-details/:id" element={<FacultyDetail />} />
-            <Route path="researcher-details/:type/:id" element={<ResearcherDetails />} />
+            <Route path="researcher-details/:id" element={<ResearcherDetails />} >
+              {/* <Route index  element={<ScholarsInfo />} />
+              <Route path="publications" element={<ScholarsPublications />} />
+              <Route path="semesters" element={<ScholarsSemesters />} /> */}
+            </Route>
             
             {/* protected routes */}
             <Route path="/login" element={<Login />} />

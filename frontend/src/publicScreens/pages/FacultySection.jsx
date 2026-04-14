@@ -14,6 +14,7 @@ const FacultySection = () => {
       try {
         const response = await axiosWrapper.get("/faculty/public");
         if (response.data.success) {
+          console.log(response.data.data)
           setDynamicFaculty(response.data.data);
         }
       } catch (error) {
