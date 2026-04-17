@@ -261,9 +261,9 @@ exports.updateScholar = async (req, res) => {
       req.body,
       { new: true, runValidators: true }
     )
-      .populate("supervisor", "name")
-      .populate("coSupervisor", "name")
-      .populate("srcCommittee.member", "name");
+      .populate("supervisor", "firstName lastName")
+      .populate("coSupervisor", "firstName lastName")
+      .populate("srcCommittee.member", "firstName lastName");
 
     if (!updated) {
       return ApiResponse.created("Scholar not found").send(res);

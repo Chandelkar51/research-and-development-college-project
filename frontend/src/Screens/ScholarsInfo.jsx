@@ -1,7 +1,7 @@
 import React from 'react'
 import CustomButton from '../components/CustomButton'
 
-const ScholarsInfo = ({scholar, openEditModal}) => {
+const ScholarsInfo = ({scholar, openEditModal, openSrcCommitteeModal}) => {
 
     if(!scholar) return <div className='items-center mt-10 text-xl'>Loading...</div>
 // console.log(scholar)
@@ -137,7 +137,10 @@ const ScholarsInfo = ({scholar, openEditModal}) => {
                         </div>
                     </div>
                     <div className=" p-6 rounded-2xl border border-gray-300 max-h-100 overflow-y-scroll no-scrollbar">
-                        <h2 className="text-lg font-semibold mb-4">SRC Committee</h2>
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-lg font-semibold">SRC Committee</h2>
+                            <CustomButton onClick={openSrcCommitteeModal}>Edit SRC</CustomButton>
+                        </div>
                         <div className=" pl-2 space-y-4 text-sm text-gray-500">
                             {scholar.srcCommittee?.slice()
                             .map((src, index) => (
@@ -151,6 +154,9 @@ const ScholarsInfo = ({scholar, openEditModal}) => {
                                     <p className='ml-6' >{src.designation}</p>
                                 </div>
                             ))}
+                            {(!scholar.srcCommittee || scholar.srcCommittee.length === 0) && (
+                                <p>No SRC committee members added.</p>
+                            )}
                         </div>
                     </div>
                 </div>
