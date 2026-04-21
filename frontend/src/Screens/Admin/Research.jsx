@@ -240,10 +240,7 @@ const Research = () => {
                   >
                     <div className="flex gap-4">
                       <img
-                        src={
-                          researcher.profile ||
-                          `https://api.dicebear.com/7.x/adventurer/svg?seed=${researcher.firstName}`
-                        }
+                        src={researcher.profile ? `${process.env.REACT_APP_MEDIA_LINK}/${researcher.profile}` : "user.png"}
                         alt={researcher.firstName}
                         className="h-20 w-20 rounded-full object-cover bg-gray-100"
                       />
